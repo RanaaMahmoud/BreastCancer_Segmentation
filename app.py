@@ -4,16 +4,26 @@ import numpy as np
 from torchvision import transforms
 from PIL import Image
 from datetime import datetime
+import os
+import gdown
 
 # ---------------- Streamlit Page Config ----------------
 st.set_page_config(page_title="🩻 Breast Segmentation", layout="centered")
 st.title("🧬 Breast Cancer Region Segmentation")
 st.markdown("Upload a mammogram image to visualize the segmented cancerous region.")
 
+# ---------------- Download Model if Needed ----------------
+MODEL_PATH = "model.pt"
+GDRIVE_FILE_ID = "YOUR_FILE_ID_HERE"  # <- Replace with your real file ID
+
+if not os.path.exists(MODEL_PATH):
+    with st.spinner("🔽 Downloading model weights..."):
+        gdown.download(f"https://drive.google.com/uc?id={14HEwfJQjVdn7VIyRFu-byjXKkTYiMbpJ}", MODEL_PATH, quiet=False)
+
 # ---------------- Load Model ----------------
 @st.cache_resource
 def load_model():
-    model = torch.load("model.pt", map_location=torch.device('cpu'))  # Use GPU if available
+    model = torch.load(MODEL_PATH, map_location=torch.device('cpu'))  # Use GPU if available
     model.eval()
     return model
 
