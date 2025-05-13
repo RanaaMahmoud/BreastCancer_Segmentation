@@ -1,0 +1,11 @@
+# Ignore PyTorch model files
+*.pth
+
+# Ignore TensorFlow/Keras model files
+*.h5
+
+# Ignore Pickle files
+*.pkl
+
+# Ignore model directory (if any)
+model/
