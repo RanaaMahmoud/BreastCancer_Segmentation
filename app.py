@@ -24,12 +24,13 @@ if not os.path.exists(MODEL_PATH):
 @st.cache_resource
 def load_model():
     try:
-        model = torch.load(MODEL_PATH, map_location=torch.device('cpu'))
+        model = torch.load(MODEL_PATH, map_location=torch.device('cpu'), weights_only=False)
         model.eval()
         return model
     except Exception as e:
         st.error(f"❌ Failed to load model: {e}")
         return None
+
 
 model = load_model()
 
