@@ -21,6 +21,30 @@ if not os.path.exists(MODEL_PATH):
         gdown.download(f"https://drive.google.com/uc?id={GDRIVE_FILE_ID}",MODEL_PATH,quiet=False,use_cookies=False
 )
 # ---------------- Load Model ----------------
+# Define your model class
+import torch.nn as nn
+
+class Unet(nn.Module):
+    def __init__(self):
+        super(Unet, self).__init__()
+        # define your layers here
+
+    def forward(self, x):
+        # implement forward pass
+        return x
+
+# Load model
+@st.cache_resource
+def load_model():
+    try:
+        model = torch.load(MODEL_PATH, map_location=torch.device('cpu'))
+        model.eval()
+        return model
+    except Exception as e:
+        st.error(f"❌ Failed to load model: {e}")
+        return None
+
+
 @st.cache_resource
 def load_model():
     try:
