@@ -14,12 +14,12 @@ st.markdown("Upload a mammogram image to visualize the segmented cancerous regio
 
 # ---------------- Download Model if Needed ----------------
 MODEL_PATH = "model.pt"
-GDRIVE_FILE_ID = "14HEwfJQjVdn7VIyRFu-byjXKkTYiMbpJ"  # <- Replace with your real file ID
+GDRIVE_FILE_ID = "1FIEqYJy6qkdAGNiPZ-IH_9hoo7nW2Tu7"  # <- Replace with your real file ID
 
 if not os.path.exists(MODEL_PATH):
     with st.spinner("🔽 Downloading model weights..."):
-        gdown.download(f"https://drive.google.com/uc?id={GDRIVE_FILE_ID}", MODEL_PATH, quiet=False)
-
+        gdown.download(f"https://drive.google.com/uc?id={GDRIVE_FILE_ID}",MODEL_PATH,quiet=False,use_cookies=False
+)
 # ---------------- Load Model ----------------
 @st.cache_resource
 def load_model():
