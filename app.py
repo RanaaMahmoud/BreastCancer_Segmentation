@@ -14,18 +14,22 @@ st.markdown("Upload a mammogram image to visualize the segmented cancerous regio
 
 # ---------------- Download Model if Needed ----------------
 MODEL_PATH = "model.pt"
-GDRIVE_FILE_ID = "YOUR_FILE_ID_HERE"  # <- Replace with your real file ID
+GDRIVE_FILE_ID = "14HEwfJQjVdn7VIyRFu-byjXKkTYiMbpJ"  # <- Replace with your real file ID
 
 if not os.path.exists(MODEL_PATH):
     with st.spinner("🔽 Downloading model weights..."):
-        gdown.download(f"https://drive.google.com/uc?id={14HEwfJQjVdn7VIyRFu-byjXKkTYiMbpJ}", MODEL_PATH, quiet=False)
+        gdown.download(f"https://drive.google.com/uc?id={GDRIVE_FILE_ID}", MODEL_PATH, quiet=False)
 
 # ---------------- Load Model ----------------
 @st.cache_resource
 def load_model():
-    model = torch.load(MODEL_PATH, map_location=torch.device('cpu'))  # Use GPU if available
-    model.eval()
-    return model
+    try:
+        model = torch.load(MODEL_PATH, map_location=torch.device('cpu'))
+        model.eval()
+        return model
+    except Exception as e:
+        st.error(f"❌ Failed to load model: {e}")
+        return None
 
 model = load_model()
 
@@ -53,6 +57,11 @@ def segment_image(image: Image.Image, model):
 
 # ---------------- Upload + Display ----------------
 uploaded_file = st.file_uploader("📤 Upload a grayscale mammogram image", type=["jpg", "jpeg", "png"])
+def display_mask(mask_np):
+    fig, ax = plt.subplots()
+    ax.imshow(mask_np, cmap='hot', interpolation='nearest')
+    ax.axis('off')
+    st.pyplot(fig)
 
 if uploaded_file:
     pil_image = Image.open(uploaded_file).convert("L")  # Ensure grayscale
@@ -62,7 +71,7 @@ if uploaded_file:
         mask_np = segment_image(pil_image, model)
 
     # Display segmentation mask
-    st.image(mask_np, caption="🩻 Segmented Region", use_column_width=True, clamp=True)
+    display_mask(mask_np)
 
     # Save option
     if st.checkbox("💾 Save segmentation mask as image"):
