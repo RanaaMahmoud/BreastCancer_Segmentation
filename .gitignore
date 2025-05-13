@@ -9,3 +9,4 @@
 
 # Ignore model directory (if any)
 model/
+"model.pth" 
