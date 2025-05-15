@@ -148,25 +148,27 @@ val_transforms = transforms.Compose([
 
 # Overlay mask on original image
 def overlay_mask(image: Image.Image, mask_tensor: torch.Tensor) -> Image.Image:
-    # Resize the original image to match mask size if needed
+    # Resize original image
     image = image.resize((image_size, image_size))
-    
-    # Convert mask to numpy array and ensure values are in 0-255
+
+    # Convert tensor to numpy
     mask = mask_tensor.squeeze().cpu().numpy()
     mask = np.clip(mask * 255, 0, 255).astype(np.uint8)
 
-    # Create mask image from numpy
+    # Convert to grayscale PIL image (important!)
     mask_img = Image.fromarray(mask).convert("L")
 
-    # Only apply mask if it has non-zero area
+    # Skip colorizing if the mask is blank
     if mask_img.getextrema()[1] == 0:
-        return image.convert("RGB")  # No mask, just return original
+        return image.convert("RGB")
 
     # Colorize and blend
+    st.write("Mask image extrema (min/max):", mask_img.getextrema())
     color_mask = ImageOps.colorize(mask_img, black="black", white="red").convert("RGBA")
     base_img = image.convert("RGBA")
     blended = Image.blend(base_img, color_mask, alpha=0.4)
     return blended
+
 
 
 # Streamlit UI
