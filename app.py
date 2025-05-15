@@ -87,29 +87,17 @@ class Unet(nn.Module):
 
 # ---------------- Download Model if Needed ----------------
 MODEL_PATH = "model_weights.pth"
-GDRIVE_FILE_ID = "1GHcCccSW7v7wxbrWZ8uE07BwtcR9pUNR"  # <- Replace with your actual ID
-
-if not os.path.exists(MODEL_PATH):
-    with st.spinner("🔽 Downloading model weights..."):
-        gdown.download(f"https://drive.google.com/uc?id={GDRIVE_FILE_ID}", MODEL_PATH, quiet=False, use_cookies=False)
-
 # ---------------- Load Model ---------------
-# ---------------- Load Model ----------------
+import torch
+import torch.nn as nn
+
 @st.cache_resource
 def load_model():
-    try:
-        # Rebuild the architecture
-        model = Unet(input_channel=1)
-        state_dict = torch.load(MODEL_PATH, map_location="cpu")  # Now this is weights only
-        model.load_state_dict(state_dict)
-        model.eval()
-        st.success("✅ Model weights loaded and architecture rebuilt!")
-        return model
-    except Exception as e:
-        st.error(f"❌ Failed to load model: {e}")
-        return None
+    model = Unet()
+    model.load_state_dict(torch.load("model_weights.pth", map_location="cpu"))
+    model.eval()
+    return model
 
-model = load_model()
 # ---------------- Preprocessing ----------------
 transform = transforms.Compose([
     transforms.Resize((128, 128)),
