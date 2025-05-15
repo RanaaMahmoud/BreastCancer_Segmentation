@@ -190,5 +190,9 @@ if uploaded_file is not None:
     # Run prediction
     blended_result, predicted_mask = predict_and_overlay(pil_image)
 
-    st.subheader("Overlayed Prediction")
-    st.image(pil_image, use_column_width=True)
+    st.subheader("Predicted Mask")
+    st.image(predicted_mask, use_column_width=True)
+
+
+    st.subheader("Overlayed Mask")
+    st.image(blended_result, use_column_width=True)
