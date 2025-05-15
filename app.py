@@ -86,7 +86,7 @@ class Unet(nn.Module):
         return self.final(d4)
 
 # ---------------- Download Model if Needed ----------------
-MODEL_PATH = "model.pt"
+MODEL_PATH = "model_weights.pth"
 GDRIVE_FILE_ID = "1GHcCccSW7v7wxbrWZ8uE07BwtcR9pUNR"  # <- Replace with your actual ID
 
 if not os.path.exists(MODEL_PATH):
@@ -98,21 +98,17 @@ if not os.path.exists(MODEL_PATH):
 @st.cache_resource
 def load_model():
     try:
-        # Try loading full model
-        model = torch.load(MODEL_PATH, map_location=torch.device("cpu"))
-        if isinstance(model, dict):  # If it's a state_dict, rebuild model
-            st.warning("🔁 Loaded state_dict — rebuilding model architecture...")
-            model_obj = Unet()
-            model_obj.load_state_dict(model)
-            model_obj.eval()
-            return model_obj
-        else:
-            st.success("✅ Loaded full model successfully!")
-            model.eval()
-            return model
+        # Rebuild the architecture
+        model = Unet(input_channel=1)
+        state_dict = torch.load(MODEL_PATH, map_location="cpu")  # Now this is weights only
+        model.load_state_dict(state_dict)
+        model.eval()
+        st.success("✅ Model weights loaded and architecture rebuilt!")
+        return model
     except Exception as e:
         st.error(f"❌ Failed to load model: {e}")
         return None
+
 model = load_model()
 # ---------------- Preprocessing ----------------
 transform = transforms.Compose([
