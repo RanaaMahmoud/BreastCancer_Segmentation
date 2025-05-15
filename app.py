@@ -157,11 +157,25 @@ def segment_image(image: Image.Image, model):
     return mask.squeeze().numpy()
 
 # ---------------- Display Mask ----------------
-def display_mask(mask_np):
-    fig, ax = plt.subplots()
-    ax.imshow(mask_np, cmap='hot')
-    ax.axis('off')
-    st.pyplot(fig)
+def display_mask_overlay(original_img: Image.Image, mask_np):
+    # Resize image and mask to match (128x128)
+    image_np = np.array(original_img.resize((128, 128))).astype(np.float32) / 255.0
+    mask_np = (mask_np > 0.5).astype(np.float32)  # binary mask
+
+    # If grayscale, convert to RGB
+    if image_np.ndim == 2:
+        image_np = np.stack([image_np]*3, axis=-1)
+
+    # Create a red overlay for the mask
+    red_mask = np.zeros_like(image_np)
+    red_mask[..., 0] = mask_np  # Red channel for mask
+
+    # Blend original image with red mask (adjust alpha for visibility)
+    overlay = (image_np * 0.7 + red_mask * 0.3)
+    overlay = np.clip(overlay, 0, 1)
+
+    st.image(overlay, caption="📸 Original Image with Mask Overlay", use_column_width=True)
+
 
 # ---------------- Upload + Display ----------------
 uploaded_file = st.file_uploader("📤 Upload a grayscale mammogram image", type=["jpg", "jpeg", "png"])
@@ -172,7 +186,8 @@ if uploaded_file:
     with st.spinner("🧠 Running segmentation..."):
         mask_np = segment_image(pil_image, model)
 
-    display_mask(mask_np)
+    display_mask_overlay(pil_image, mask_np)
+
 
     if st.checkbox("💾 Save segmentation mask as image"):
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
