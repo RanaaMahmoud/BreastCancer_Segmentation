@@ -140,56 +140,59 @@ def load_model():
 model = load_model()
 # ---------------- Preprocessing ----------------
 # Same preprocessing as during training
+# Preprocessing (as used during training)
 image_size = 128
 transform = transforms.Compose([
     transforms.Resize([image_size, image_size]),
     transforms.ToTensor(),
 ])
 
-# Function to predict and return overlaid image
-def predict_and_overlay(image: Image.Image, threshold=0.5):
-    original_size = image.size  # Save original size
-    input_image = transform(image).unsqueeze(0)  # shape: [1, 1, 128, 128]
+# Predict and overlay mask
+def predict_and_overlay(pil_image, threshold=0.5):
+    original_size = pil_image.size  # Save original dimensions
+
+    # Preprocess the image
+    input_tensor = transform(pil_image).unsqueeze(0)  # shape: [1, 1, 128, 128]
 
     with torch.no_grad():
-        output = model(input_image)
+        output = model(input_tensor)
         output = torch.sigmoid(output)
         mask = output.squeeze().cpu().numpy()
 
-    # Resize mask back to original image size
+    # Resize mask to match original image
     mask_resized = Image.fromarray((mask * 255).astype(np.uint8)).resize(original_size)
     mask_np = np.array(mask_resized)
 
     # Apply threshold
     mask_bin = mask_np > (threshold * 255)
 
-    # Convert grayscale to RGB
-    image_rgb = image.convert("RGB")
+    # Convert grayscale image to RGB
+    image_rgb = pil_image.convert("RGB")
     image_np = np.array(image_rgb)
 
-    # Create red mask on predicted region
+    # Overlay red color where mask is predicted
     overlay = image_np.copy()
-    overlay[mask_bin] = [255, 0, 0]  # Red for mask
+    overlay[mask_bin] = [255, 0, 0]  # Red
 
-    # Blend original and mask overlay
+    # Blend original and overlay
     blended = Image.blend(Image.fromarray(image_np), Image.fromarray(overlay), alpha=0.4)
 
     return blended, mask_resized
 
-# Streamlit UI
-st.title("Segmentation Inference Demo")
+# Streamlit App
+st.title("Breast Cancer Segmentation Demo")
 uploaded_file = st.file_uploader("Upload a grayscale image", type=["png", "jpg", "jpeg"])
 
 if uploaded_file is not None:
-    image = Image.open(uploaded_file).convert('L')
+    pil_image = Image.open(uploaded_file).convert('L')  # Grayscale
     st.subheader("Original Image")
-    st.image(image, width=256)
+    st.image(pil_image, width=256)
 
-    # Predict and overlay
-    blended, predicted_mask = predict_and_overlay(image)
+    # Run prediction
+    blended_result, predicted_mask = predict_and_overlay(pil_image)
 
-    st.subheader("Predicted Mask Overlay")
-    st.image(blended, width=256)
+    st.subheader("Overlayed Prediction")
+    st.image(blended_result, width=256)
 
-    st.subheader("Predicted Raw Mask (Resized)")
+    st.subheader("Predicted Mask")
     st.image(predicted_mask, width=256)
