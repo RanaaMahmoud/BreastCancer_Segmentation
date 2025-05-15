@@ -88,15 +88,10 @@ class Unet(nn.Module):
 # ---------------- Download Model if Needed ----------------
 MODEL_PATH = "model_weights.pth"
 # ---------------- Load Model ---------------
-import torch
-import torch.nn as nn
+from torch.serialization import add_safe_globals  
+add_safe_globals([Unet, Encoder, Decoder, ConvBlock])  # explicitly trust these
 
-@st.cache_resource
-def load_model():
-    model = Unet()
-    model.load_state_dict(torch.load("model_weights.pth", map_location="cpu"))
-    model.eval()
-    return model
+model = torch.load("model_weights.pth", map_location="cpu", weights_only=False)
 
 # ---------------- Preprocessing ----------------
 transform = transforms.Compose([
