@@ -3,8 +3,8 @@
 This is a Streamlit web app for automatic breast cancer region segmentation in mammogram images using a U-Net deep learning model.
 Upload a grayscale mammogram, and the model will highlight suspected cancerous regions.
 
-Try it now!
-🚀 [Launch the App on Streamlit Cloud]([https://share.streamlit.io/your-username/your-repo-name/main/app.py](https://breastcancersegmentation-zjzr9mkmtawffblusmfhtp.streamlit.app/))
+# Try it now!
+🚀 [Launch the App on Streamlit Cloud]([https://share.streamlit.io/your-username/your-repo-name/main/app.py](https://breastcancersegmentation-zjzr9mkmtawffblusmfhtp.streamlit.app/)
 
 ---
 
@@ -66,16 +66,5 @@ streamlit run app.py
 * Trained on: Preprocessed grayscale mammograms
 * Output: Segmentation mask (pixel-wise prediction)
 
----
-Here’s a clear and user-friendly `README.md` for your breast cancer segmentation Streamlit app that can be used on GitHub:
 
----
-
-# 🧬 Breast Cancer Region Segmentation App
-
-This is a **Streamlit web app** for automatic **breast cancer region segmentation** in mammogram images using a **U-Net** deep learning model.
-Upload a grayscale mammogram, and the model will highlight suspected cancerous regions.
-
-Try it now!
-🚀 [Launch the App on Streamlit Cloud](https://share.streamlit.io/your-username/your-repo-name/main/app.py) *(replace with your actual link)*
 
