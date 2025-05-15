@@ -4,7 +4,7 @@ This is a **Streamlit web app** for automatic **breast cancer region segmentatio
 Upload a grayscale mammogram, and the model will highlight suspected cancerous regions.
 
 Try it now!
-🚀 [Launch the App on Streamlit Cloud](https://share.streamlit.io/your-username/your-repo-name/main/app.py) *(replace with your actual link)*
+🚀 [Launch the App on Streamlit Cloud]([https://share.streamlit.io/your-username/your-repo-name/main/app.py](https://breastcancersegmentation-zjzr9mkmtawffblusmfhtp.streamlit.app/))
 
 ---
 
