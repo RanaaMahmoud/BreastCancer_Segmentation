@@ -5,7 +5,7 @@ Upload a grayscale mammogram, and the model will highlight suspected cancerous r
 
 ## 🚀 Try It Out
 
-👉 **Live Demo:** [Bone Fracture Detection Web App]([https://bonefracturedetection-app-app-odmvyyqvucylax43q9vafp.streamlit.app/](https://breastcancersegmentation-zjzr9mkmtawffblusmfhtp.streamlit.app/)
+👉 **Live Demo:** [Bone Fracture Detection Web App](https://breastcancersegmentation-zjzr9mkmtawffblusmfhtp.streamlit.app/)
 
 ---
 
