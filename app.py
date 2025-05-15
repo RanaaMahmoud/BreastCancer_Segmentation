@@ -21,69 +21,97 @@ class ConvBlock(nn.Module):
         self.conv2d_1 = nn.Conv2d(input_channel, out_channel, kernel_size=3, padding=1)
         self.batchnorm_1 = nn.BatchNorm2d(out_channel)
         self.relu_1 = nn.ReLU()
+        
         self.dropout = nn.Dropout(dropout)
+        
         self.conv2d_2 = nn.Conv2d(out_channel, out_channel, kernel_size=3, padding=1)
         self.batchnorm_2 = nn.BatchNorm2d(out_channel)
         self.relu_2 = nn.ReLU()
 
     def forward(self, x):
-        x = self.relu_1(self.batchnorm_1(self.conv2d_1(x)))
+        x = self.conv2d_1(x)
+        x = self.batchnorm_1(x)
+        x = self.relu_1(x)
+        
         x = self.dropout(x)
-        x = self.relu_2(self.batchnorm_2(self.conv2d_2(x)))
+        
+        x = self.conv2d_2(x)
+        x = self.batchnorm_2(x)
+        x = self.relu_2(x)
+
         return x
 
 class Encoder(nn.Module):
     def __init__(self, input_channel, out_channel, dropout):
         super(Encoder, self).__init__()
-        self.conv = ConvBlock(input_channel, out_channel, dropout)
-        self.pool = nn.MaxPool2d((2,2))
+        self.conv2d_1 = ConvBlock(input_channel, out_channel, dropout)
+        self.maxpool = nn.MaxPool2d((2,2))
         self.dropout = nn.Dropout(dropout)
-
+        
     def forward(self, x):
-        x = self.conv(x)
-        p = self.dropout(self.pool(x))
+        x = self.conv2d_1(x)
+        p = self.maxpool(x)
+        p = self.dropout(p)
+
         return x, p
 
 class Decoder(nn.Module):
     def __init__(self, input_channel, output_channel, dropout):
         super(Decoder, self).__init__()
         self.conv_t = nn.ConvTranspose2d(input_channel, output_channel, stride=2, kernel_size=2)
-        self.conv = ConvBlock(output_channel*2, output_channel, dropout)
+        self.conv2d_1 = ConvBlock(output_channel*2, output_channel, dropout)
         self.dropout = nn.Dropout(dropout)
-
+        
     def forward(self, x, skip):
         x = self.conv_t(x)
         x = torch.cat([x, skip], dim=1)
         x = self.dropout(x)
-        x = self.conv(x)
+        x = self.conv2d_1(x)
+
         return x
 
 # ---------------- Define Full UNet ----------------
 class Unet(nn.Module):
-    def __init__(self):
-        super(Unet, self).__init__()
-        self.encoder1 = Encoder(1, 64, 0.1)
-        self.encoder2 = Encoder(64, 128, 0.1)
-        self.encoder3 = Encoder(128, 256, 0.2)
-        self.encoder4 = Encoder(256, 512, 0.2)
-        self.bottleneck = ConvBlock(512, 1024, 0.3)
-        self.decoder1 = Decoder(1024, 512, 0.2)
-        self.decoder2 = Decoder(512, 256, 0.2)
-        self.decoder3 = Decoder(256, 128, 0.1)
-        self.decoder4 = Decoder(128, 64, 0.1)
-        self.final = nn.Conv2d(64, 1, kernel_size=1)
+
+    def __init__(self, input_channel=1):
+        super().__init__()
+        self.encoder_1 = Encoder(input_channel, 64, 0.07)
+        self.encoder_2 = Encoder(64, 128, 0.08)
+        self.encoder_3 = Encoder(128, 256, 0.09)
+        self.encoder_4 = Encoder(256, 512, 0.1)
+
+        self.conv_block = ConvBlock(512, 1024, 0.11)
+
+        self.decoder_1 = Decoder(1024, 512, 0.1)
+        self.decoder_2 = Decoder(512, 256, 0.09)
+        self.decoder_3 = Decoder(256, 128, 0.08)
+        self.decoder_4 = Decoder(128, 64, 0.07)
+
+        self.cls = nn.Conv2d(64, 1, kernel_size=1, padding=0)
+        self.relu = nn.Sigmoid() 
 
     def forward(self, x):
-        s1, p1 = self.encoder1(x)
-        s2, p2 = self.encoder2(p1)
-        s3, p3 = self.encoder3(p2)
-        s4, p4 = self.encoder4(p3)
-        b = self.bottleneck(p4)
-        d1 = self.decoder1(b, s4)
-        d2 = self.decoder2(d1, s3)
-        d3 = self.decoder3(d2, s2)
-        d4 = self.decoder4(d3, s1)
-        return self.final(d4)
+
+        """ ------ Encoder ------"""
+        x1, p1 = self.encoder_1(x)
+        x2, p2 = self.encoder_2(p1)
+        x3, p3 = self.encoder_3(p2)
+        x4, p4 = self.encoder_4(p3)
+
+        """ ------ BottleNeck ------"""
+        x5 = self.conv_block(p4)
+
+        """ ------ Decoder ------"""
+        x6 = self.decoder_1(x5, x4)
+        x7 = self.decoder_2(x6, x3)
+        x8 = self.decoder_3(x7, x2)
+        x9 = self.decoder_4(x8, x1)
+        
+        """ ------ Final Layer ------"""
+        x_final = self.cls(x9)
+        x_final = self.relu(x_final)
+
+        return x_final
 
 # ---------------- Download Model if Needed ----------------
 MODEL_PATH = "model_weights.pth"
