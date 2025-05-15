@@ -139,61 +139,50 @@ def load_model():
 
 model = load_model()
 # ---------------- Preprocessing ----------------
-transform = transforms.Compose([
-    transforms.Resize((128, 128)),
-    transforms.ToTensor(),
+#Define image transformation (same as your val_transforms)
+image_size = 128
+val_transforms = transforms.Compose([
+    transforms.Resize([image_size, image_size]),
+    transforms.ToTensor()
 ])
 
-# ---------------- Inference ----------------
-def segment_image(image: Image.Image, model):
-    img_tensor = transform(image).unsqueeze(0)
-    if img_tensor.shape[1] == 3:
-        img_tensor = img_tensor[:, 0:1]  # convert RGB to single channel if needed
+# Overlay mask on original image
+def overlay_mask(image: Image.Image, mask_tensor: torch.Tensor) -> Image.Image:
+    # Resize the original image to match mask size if needed
+    image = image.resize((image_size, image_size))
+    
+    # Convert mask to PIL Image
+    mask = mask_tensor.squeeze().detach().cpu().numpy()
+    mask_img = Image.fromarray((mask * 255).astype(np.uint8)).convert("L")
+
+    # Colorize mask (e.g., red)
+    color_mask = ImageOps.colorize(mask_img, black="black", white="red").convert("RGBA")
+
+    # Convert image to RGBA and overlay
+    base_img = image.convert("RGBA")
+    blended = Image.blend(base_img, color_mask, alpha=0.4)
+    return blended
+
+# Streamlit UI
+st.title("Segmentation Inference Demo")
+uploaded_file = st.file_uploader("Upload a grayscale image", type=["png", "jpg", "jpeg"])
+
+if uploaded_file is not None:
+    image = Image.open(uploaded_file).convert('L')
+    st.subheader("Original Image")
+    st.image(image, width=256)
+
+    # Preprocess
+    input_tensor = val_transforms(image).unsqueeze(0)  # Add batch dimension
 
     with torch.no_grad():
-        output = model(img_tensor)
-        output = torch.sigmoid(output)
-        mask = (output > 0.5).float()
-    return mask.squeeze().numpy()
+        output = model(input_tensor)
+        # Optional: Apply sigmoid if your model output is not already thresholded
+        pred_mask = torch.sigmoid(output)
+        pred_mask = (pred_mask > 0.5).float()  # Binarize
 
-# ---------------- Display Mask ----------------
-def display_mask_overlay(original_img: Image.Image, mask_np):
-    # Resize image and mask to match (128x128)
-    image_np = np.array(original_img.resize((128, 128))).astype(np.float32) / 255.0
-    mask_np = (mask_np > 0.5).astype(np.float32)  # binary mask
+    # Overlay
+    result = overlay_mask(image, pred_mask[0])  # Remove batch
 
-    # If grayscale, convert to RGB
-    if image_np.ndim == 2:
-        image_np = np.stack([image_np]*3, axis=-1)
-
-    # Create a red overlay for the mask
-    red_mask = np.zeros_like(image_np)
-    red_mask[..., 0] = mask_np  # Red channel for mask
-
-    # Blend original image with red mask (adjust alpha for visibility)
-    overlay = (image_np * 0.7 + red_mask * 0.3)
-    overlay = np.clip(overlay, 0, 1)
-
-    st.image(overlay, caption="📸 Original Image with Mask Overlay", use_column_width=True)
-
-
-# ---------------- Upload + Display ----------------
-uploaded_file = st.file_uploader("📤 Upload a grayscale mammogram image", type=["jpg", "jpeg", "png"])
-if uploaded_file:
-    pil_image = Image.open(uploaded_file).convert("L")  # force grayscale
-    st.image(pil_image, caption="Uploaded Image", use_column_width=True)
-
-    with st.spinner("🧠 Running segmentation..."):
-        mask_np = segment_image(pil_image, model)
-
-    display_mask_overlay(pil_image, mask_np)
-
-
-    if st.checkbox("💾 Save segmentation mask as image"):
-        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        mask_img = Image.fromarray((mask_np * 255).astype(np.uint8))
-        filename = f"mask_{timestamp}.png"
-        mask_img.save(filename)
-        st.success(f"✅ Mask saved as {filename}")
-else:
-    st.info("👆 Please upload a mammogram image to begin.")
+    st.subheader("Predicted Mask Overlay")
+    st.image(result, width=256)
