@@ -87,7 +87,7 @@ class Unet(nn.Module):
 
 # ---------------- Download Model if Needed ----------------
 MODEL_PATH = "model.pt"
-GDRIVE_FILE_ID = "1FIEqYJy6qkdAGNiPZ-IH_9hoo7nW2Tu7"  # <- Replace with your actual ID
+GDRIVE_FILE_ID = "1GHcCccSW7v7wxbrWZ8uE07BwtcR9pUNR"  # <- Replace with your actual ID
 
 if not os.path.exists(MODEL_PATH):
     with st.spinner("🔽 Downloading model weights..."):
