@@ -123,11 +123,21 @@ if not os.path.exists(MODEL_PATH):
 
 
 # ---------------- Load Model ---------------
-from torch.serialization import add_safe_globals  
-add_safe_globals([Unet, Encoder, Decoder, ConvBlock])  # explicitly trust these
+@st.cache_resource
+def load_model():
+    try:
+        # Rebuild the architecture
+        model = Unet(input_channel=1)
+        state_dict = torch.load(MODEL_PATH, map_location="cpu")  # Now this is weights only
+        model.load_state_dict(state_dict)
+        model.eval()
+        st.success("✅ Model weights loaded and architecture rebuilt!")
+        return model
+    except Exception as e:
+        st.error(f"❌ Failed to load model: {e}")
+        return None
 
-model = torch.load("model_weights.pth", map_location="cpu", weights_only=False)
-
+model = load_model()
 # ---------------- Preprocessing ----------------
 transform = transforms.Compose([
     transforms.Resize((128, 128)),
