@@ -95,16 +95,15 @@ if not os.path.exists(MODEL_PATH):
 
 # ---------------- Load Model ----------------
 @st.cache_resource
+@st.cache_resource
 def load_model():
     try:
-        with torch.serialization.safe_globals({'__main__.Unet': Unet}):
-            model = torch.load(MODEL_PATH, map_location=torch.device('cpu'))
+        model = torch.load(MODEL_PATH, map_location=torch.device("cpu"), weights_only=False)
         model.eval()
         return model
     except Exception as e:
         st.error(f"❌ Failed to load model: {e}")
         return None
-model = load_model()
 
 # ---------------- Preprocessing ----------------
 transform = transforms.Compose([
