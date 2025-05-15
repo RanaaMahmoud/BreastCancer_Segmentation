@@ -115,6 +115,13 @@ class Unet(nn.Module):
 
 # ---------------- Download Model if Needed ----------------
 MODEL_PATH = "model_weights.pth"
+GDRIVE_FILE_ID = "1GHcCccSW7v7wxbrWZ8uE07BwtcR9pUNR"  # <- Replace with your actual ID
+
+if not os.path.exists(MODEL_PATH):
+    with st.spinner("🔽 Downloading model weights..."):
+        gdown.download(f"https://drive.google.com/uc?id={GDRIVE_FILE_ID}", MODEL_PATH, quiet=False, use_cookies=False)
+
+
 # ---------------- Load Model ---------------
 from torch.serialization import add_safe_globals  
 add_safe_globals([Unet, Encoder, Decoder, ConvBlock])  # explicitly trust these
