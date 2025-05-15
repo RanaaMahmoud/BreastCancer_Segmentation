@@ -151,17 +151,23 @@ def overlay_mask(image: Image.Image, mask_tensor: torch.Tensor) -> Image.Image:
     # Resize the original image to match mask size if needed
     image = image.resize((image_size, image_size))
     
-    # Convert mask to PIL Image
-    mask = mask_tensor.squeeze().detach().cpu().numpy()
-    mask_img = Image.fromarray((mask * 255).astype(np.uint8)).convert("L")
+    # Convert mask to numpy array and ensure values are in 0-255
+    mask = mask_tensor.squeeze().cpu().numpy()
+    mask = np.clip(mask * 255, 0, 255).astype(np.uint8)
 
-    # Colorize mask (e.g., red)
+    # Create mask image from numpy
+    mask_img = Image.fromarray(mask).convert("L")
+
+    # Only apply mask if it has non-zero area
+    if mask_img.getextrema()[1] == 0:
+        return image.convert("RGB")  # No mask, just return original
+
+    # Colorize and blend
     color_mask = ImageOps.colorize(mask_img, black="black", white="red").convert("RGBA")
-
-    # Convert image to RGBA and overlay
     base_img = image.convert("RGBA")
     blended = Image.blend(base_img, color_mask, alpha=0.4)
     return blended
+
 
 # Streamlit UI
 st.title("Segmentation Inference Demo")
