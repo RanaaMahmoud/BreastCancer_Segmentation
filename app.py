@@ -139,37 +139,42 @@ def load_model():
 
 model = load_model()
 # ---------------- Preprocessing ----------------
-#Define image transformation (same as your val_transforms)
+# Same preprocessing as during training
 image_size = 128
-val_transforms = transforms.Compose([
+transform = transforms.Compose([
     transforms.Resize([image_size, image_size]),
-    transforms.ToTensor()
+    transforms.ToTensor(),
 ])
 
-# Overlay mask on original image
-def overlay_mask(image: Image.Image, mask_tensor: torch.Tensor) -> Image.Image:
-    # Resize original image
-    image = image.resize((image_size, image_size))
+# Function to predict and return overlaid image
+def predict_and_overlay(image: Image.Image, threshold=0.5):
+    original_size = image.size  # Save original size
+    input_image = transform(image).unsqueeze(0)  # shape: [1, 1, 128, 128]
 
-    # Convert tensor to numpy
-    mask = mask_tensor.squeeze().cpu().numpy()
-    mask = np.clip(mask * 255, 0, 255).astype(np.uint8)
+    with torch.no_grad():
+        output = model(input_image)
+        output = torch.sigmoid(output)
+        mask = output.squeeze().cpu().numpy()
 
-    # Convert to grayscale PIL image (important!)
-    mask_img = Image.fromarray(mask).convert("L")
+    # Resize mask back to original image size
+    mask_resized = Image.fromarray((mask * 255).astype(np.uint8)).resize(original_size)
+    mask_np = np.array(mask_resized)
 
-    # Skip colorizing if the mask is blank
-    if mask_img.getextrema()[1] == 0:
-        return image.convert("RGB")
+    # Apply threshold
+    mask_bin = mask_np > (threshold * 255)
 
-    # Colorize and blend
-    st.write("Mask image extrema (min/max):", mask_img.getextrema())
-    color_mask = ImageOps.colorize(mask_img, black="black", white="red").convert("RGBA")
-    base_img = image.convert("RGBA")
-    blended = Image.blend(base_img, color_mask, alpha=0.4)
-    return blended
+    # Convert grayscale to RGB
+    image_rgb = image.convert("RGB")
+    image_np = np.array(image_rgb)
 
+    # Create red mask on predicted region
+    overlay = image_np.copy()
+    overlay[mask_bin] = [255, 0, 0]  # Red for mask
 
+    # Blend original and mask overlay
+    blended = Image.blend(Image.fromarray(image_np), Image.fromarray(overlay), alpha=0.4)
+
+    return blended, mask_resized
 
 # Streamlit UI
 st.title("Segmentation Inference Demo")
@@ -180,17 +185,11 @@ if uploaded_file is not None:
     st.subheader("Original Image")
     st.image(image, width=256)
 
-    # Preprocess
-    input_tensor = val_transforms(image).unsqueeze(0)  # Add batch dimension
-
-    with torch.no_grad():
-        output = model(input_tensor)
-        # Optional: Apply sigmoid if your model output is not already thresholded
-        pred_mask = torch.sigmoid(output)
-        pred_mask = (pred_mask > 0.5).float()  # Binarize
-
-    # Overlay
-    result = overlay_mask(image, pred_mask[0])  # Remove batch
+    # Predict and overlay
+    blended, predicted_mask = predict_and_overlay(image)
 
     st.subheader("Predicted Mask Overlay")
-    st.image(result, width=256)
+    st.image(blended, width=256)
+
+    st.subheader("Predicted Raw Mask (Resized)")
+    st.image(predicted_mask, width=256)
