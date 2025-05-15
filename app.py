@@ -184,15 +184,23 @@ uploaded_file = st.file_uploader("Upload a grayscale image", type=["png", "jpg",
 
 if uploaded_file is not None:
     pil_image = Image.open(uploaded_file).convert('L')  # Grayscale
-    st.subheader("Original Image")
-    st.image(pil_image, use_column_width=True)
 
     # Run prediction
     blended_result, predicted_mask = predict_and_overlay(pil_image)
 
-    st.subheader("Predicted Mask")
-    st.image(predicted_mask, use_column_width=True)
+    st.subheader("Results")
 
+    col1, col2, col3 = st.columns(3)
 
-    st.subheader("Overlayed Mask")
-    st.image(blended_result, use_column_width=True)
+    with col1:
+        st.caption("Original Image")
+        st.image(pil_image, use_column_width=True)
+
+    with col2:
+        st.caption("Overlayed Prediction")
+        st.image(blended_result, use_column_width=True)
+
+    with col3:
+        st.caption("Predicted Mask")
+        st.image(predicted_mask, use_column_width=True)
+
