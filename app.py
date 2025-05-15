@@ -194,13 +194,13 @@ if uploaded_file is not None:
 
     with col1:
         st.caption("Original Image")
-        st.image(pil_image, use_column_width=True)
+        st.image(pil_image, use_container_width=True)
 
     with col2:
         st.caption("Overlayed Prediction")
-        st.image(blended_result, use_column_width=True)
+        st.image(blended_result, use_container_width=True)
 
     with col3:
         st.caption("Predicted Mask")
-        st.image(predicted_mask, use_column_width=True)
+        st.image(predicted_mask, use_container_width=True)
 
