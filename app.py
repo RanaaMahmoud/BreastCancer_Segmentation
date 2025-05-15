@@ -92,22 +92,22 @@ class Unet(nn.Module):
 
     def forward(self, x):
 
-        """ ------ Encoder ------"""
+        
         x1, p1 = self.encoder_1(x)
         x2, p2 = self.encoder_2(p1)
         x3, p3 = self.encoder_3(p2)
         x4, p4 = self.encoder_4(p3)
 
-        """ ------ BottleNeck ------"""
+        
         x5 = self.conv_block(p4)
 
-        """ ------ Decoder ------"""
+        
         x6 = self.decoder_1(x5, x4)
         x7 = self.decoder_2(x6, x3)
         x8 = self.decoder_3(x7, x2)
         x9 = self.decoder_4(x8, x1)
         
-        """ ------ Final Layer ------"""
+        
         x_final = self.cls(x9)
         x_final = self.relu(x_final)
 
@@ -180,19 +180,15 @@ def predict_and_overlay(pil_image, threshold=0.5):
     return blended, mask_resized
 
 # Streamlit App
-st.title("Breast Cancer Segmentation Demo")
 uploaded_file = st.file_uploader("Upload a grayscale image", type=["png", "jpg", "jpeg"])
 
 if uploaded_file is not None:
     pil_image = Image.open(uploaded_file).convert('L')  # Grayscale
     st.subheader("Original Image")
-    st.image(pil_image, width=256)
+    st.image(pil_image, use_column_width=True)
 
     # Run prediction
     blended_result, predicted_mask = predict_and_overlay(pil_image)
 
     st.subheader("Overlayed Prediction")
-    st.image(blended_result, width=256)
-
-    st.subheader("Predicted Mask")
-    st.image(predicted_mask, width=256)
+    st.image(pil_image, use_column_width=True)
